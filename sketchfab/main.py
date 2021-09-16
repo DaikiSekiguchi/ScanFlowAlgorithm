@@ -16,6 +16,8 @@ import download, upload, profile
 ####################################################
 
 if __name__ == '__main__':
+
+    # Download
     print('Getting models from your profile...')
 
     # Timber'id which we try to get

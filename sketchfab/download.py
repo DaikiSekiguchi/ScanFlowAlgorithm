@@ -146,12 +146,12 @@ def get_collection():
         print('You don\'t seem to have any collection, let\'s create one!')
         return
     else:
-        return data['results'][0]
+        return data['results'][1]
 
 
 def create_collection(model):
     collections_endpoint = f'{SKETCHFAB_API_URL}/collections'
-    data = {'name': 'A Beautiful Collection', 'models': [model['uid']]}
+    data = {'name': 'Edited models', 'models': [model['uid']]}
     payload = _get_request_payload(data=data, json_payload=True)
 
     try:
@@ -213,38 +213,28 @@ def comment_model(model, msg):
 
 
 if __name__ == '__main__':
-    # This requires that your profile contains at least two models
+    result = get_collection()
+    print(result)
+
+    # Download
     print('Getting models from your profile...')
 
-    # Timber id
-    selected_timber_id = "Timber_001"
+    # Timber'id which we try to get
+    selected_timber_id = input("Input scan data name which you want to get (ex. Timber_001)" + "\n")
 
-    # Timbers which they try to get
-    select_model = None
+    # Timber which we try to get
+    selected_model = None
 
     # All models in sketchfab
     models = list_my_models()
 
-    # with open("download.json", "w") as f:
-    #     json.dump(models, f)
-
-    print(len(models))
+    # Extract model we want to get
     for model in models:
-        print(model["name"])
-
         if model["name"] == selected_timber_id:
-            select_model = model
+            selected_model = model
             break
 
-    # Get Timber scan model from sketchfab
-    get_model_url(select_model)
+    # Get the timber scan model from sketchfab
+    get_model_from_sketchfab(selected_model)
 
-    if models:
-        try:
-            model_1, model_2, *models = models
-        except ValueError:
-            print('You need at least two models in your profile to run this script')
-            exit(1)
-
-    else:
-        print('You don\'t have any models !')
+    print("The process all worked!")
