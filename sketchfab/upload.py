@@ -1,13 +1,13 @@
-#!/usr/bin/python3
+# coding: utf-8
 
 """Sample script for uploading to Sketchfab using the V3 API and the requests library."""
 
 import json
 from time import sleep
-
-# import the requests library
-# http://docs.python-requests.org/en/latest
-# pip install requests
+import os
+from math import floor
+import glob
+import urllib2
 import requests
 from requests.exceptions import RequestException
 
@@ -31,7 +31,7 @@ from requests.exceptions import RequestException
 ##
 
 SKETCHFAB_API_URL = 'https://api.sketchfab.com/v3'
-API_TOKEN = 'c32d8c3d03894429a298943dd5829204'
+API_TOKEN = ''
 MAX_RETRIES = 50
 MAX_ERRORS = 10
 RETRY_TIMEOUT = 5  # seconds
@@ -51,20 +51,40 @@ def _get_request_payload(*, data=None, files=None, json_payload=False):
     return {'data': data, 'files': files, 'headers': headers}
 
 
-def upload():
+def upload(select_model_file, timber_info=None):
     """
     POST a model to sketchfab.
     This endpoint only accepts formData as we upload a file.
     """
     model_endpoint = f'{SKETCHFAB_API_URL}/models'  # model url in sketchfab
 
-    # Mandatory parameters
-    model_file = r"G:\マイドライブ\2021\04_Master\2104_Scan\02_Timbers\01_original\210516_timber1\Timber_001_mesh_edit.obj"
+    # Timber information
+    timber_id = timber_info[0]
+
+    length = timber_info[1]
+    print(length)
+    length = timber_info[1].split(".")
+    length = length[0]
+    print(length)
+
+    average_thickness = timber_info[2]
+    # average_thickness = timber_info[2].split(".")
+    # average_thickness = average_thickness[0]
+
+    weight = timber_info[3]
+    split = timber_info[4].split("_")
+    scan_date = split[0]
+
+    description = "Timber ID: {0}".format(timber_id) + " / " + "Length: {0}mm".format(length) + " / " \
+                  + "Average Thickness: {0}mm".format(average_thickness) + " / " \
+                  + "Weight: {0}kg".format(weight) + " / " + "Scan Date: {0}".format(scan_date)
+
+    print(description)
 
     # Optional parameters
     data = {
-        'name': 'Timber_model',
-        'description': 'This is a timber model',
+        'name': "Timber " + timber_id,
+        'description': description,
         'tags': ['trnio', '3dscan'],  # Array of tags,
         'categories': [],  # Array of categories slugs,
         'license': 'CC Attribution',  # License label,
@@ -72,18 +92,21 @@ def upload():
         # 'password': 'my-password',  # requires a pro account,
         'isPublished': True,  # Model will be on draft instead of published,
         'isInspectable': True,  # Allow 2D view in model inspector
-        'length': 1000,
     }
 
     print('Uploading...')
 
-    with open(model_file, 'rb') as file_:
+    with open(select_model_file, 'rb') as file_:
         files = {'modelFile': file_}  # open file
         payload = _get_request_payload(data=data, files=files)
 
         # try to register some information with the server
         try:
-            response = requests.post(model_endpoint, **payload)  # requests.post(URL, arbitrary args)
+            # urllib2 -> 2系
+            response = urllib2.Request(model_endpoint, **payload)
+
+            # requests module
+            # response = requests.post(model_endpoint, **payload)  # requests.post(URL, arbitrary args)
         except RequestException as exc:
             print(f'An error occured: {exc}')
             return
@@ -201,8 +224,26 @@ def patch_model_options(model_url):
 ###################################
 
 if __name__ == '__main__':
-    a = 10
-    model_url = upload()  # get model url(like https://api.sketchfab.com/v3/models/919a98941c82443fbbd2f027fc96ad6a)
+    # Timber'id which we try to get
+    selected_timber_id = input("Input timber data name which you want to upload in sketchfab (ex. Timber_001)" + "\n")
+
+    # edited scan timber data by RhinoPython
+    base_target_dir_edit = r"G:\マイドライブ\2021\04_Master\2104_Scan\02_Timbers\02_edit\01_Database"
+    target_dir = os.path.join(base_target_dir_edit, selected_timber_id, "OBJ")
+    upload_file_path = os.path.join(target_dir, "mesh_timber" + "_" + selected_timber_id + ".obj")
+
+    # Extract upload model file
+    # files = glob.glob(os.path.join(target_dir, "*"))
+    #
+    # for file in files:
+    #     if "mesh_timber" in file and selected_timber_id in file:
+    #         print(file)
+    #         upload_file_path = file
+    #     else:
+    #         pass
+
+    # Upload in sketchfab
+    select_model_url = upload(upload_file_path, selected_timber_id)
 
     # if model_url:
     #     if poll_processing_status(model_url):
